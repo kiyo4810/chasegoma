@@ -248,26 +248,30 @@
         return audioContext;
       }
 
-      // 成功したとき（クリック時）に高い音を鳴らす
-      function playSuccessSound() {
-        try {
-          const ctxAudio = initAudio(); // システム起動
-          const now = ctxAudio.currentTime; // 今の時間
-          const gainNode = ctxAudio.createGain(); // ボリュームつまみ作成
-          gainNode.gain.value = (volume / 100) * 0.3; // スライダーの値を反映
-          gainNode.connect(ctxAudio.destination); // つまみをスピーカーに接続
+     // 1. 新しい音の読み込み（コードの上のほう、catSoundの隣に追加）
+const catSound = new Audio("images/cat.mp3");
+const specialSound = new Audio("images/special.mp3"); // 特別な音
 
-          const osc = ctxAudio.createOscillator(); // 電子音の発振器を作成
-          osc.type = "sine"; // 柔らかな音の種類に設定
-          osc.frequency.setValueAtTime(800, now); // 最初の音の高さ(800Hz)
-          osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1); // 0.1秒で音を高くする（ピコッ！）
-          osc.connect(gainNode); // 発振器をつまみに接続
-          osc.start(now); // 音を出す
-          osc.stop(now + 0.1); // 0.1秒後に止める
-        } catch (e) {
-          console.log(e);
-        } // エラーが起きてもゲームを止めない
-      }
+// 2. 関数を「もしも（if）」を使って書き換え
+function playSuccessSound() {
+  // --- 判定の仕組み ---
+  // score % 10 は「スコアを10で割った余り」という意味です。
+  // 余りが 0 ということは、10の倍数（10, 20, 30...）ということです。
+  // また、0点のときは鳴らさないように「score > 0」も加えます。
+  
+  let targetSound;
+  
+  if (score > 0 && score % 10 === 0) {
+    targetSound = specialSound; // 10の倍数ならスペシャル音
+  } else {
+    targetSound = catSound;     // それ以外はいつもの猫の声
+  }
+
+  // --- 再生処理 ---
+  targetSound.volume = volume / 100;
+  targetSound.currentTime = 0;
+  targetSound.play().catch(e => console.log("再生エラー:", e));
+}
 
       // --- 画像の読み込み ---
 
