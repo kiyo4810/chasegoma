@@ -159,7 +159,8 @@
         spriteX += spriteSpeed[0]; // ゴマちゃんを横に移動させる
         spriteY += spriteSpeed[1]; // ゴマちゃんを縦に移動させる
 
-        const bounceMargin = 40; // 壁に当たる判定の余白
+        // 【修正前】 const bounceMargin = 40;
+        const bounceMargin = 80; // サイズに合わせて余白を大きくする
         // 左の壁か右の壁に当たったら、横のスピードを反転させる
         if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin) spriteSpeed[0] *= -1;
         // 上の壁か下の壁に当たったら、縦のスピードを反転させる
@@ -193,7 +194,8 @@
         ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 50);
 
         // ゴマちゃんの描画サイズを決定（画面の短い方の17%）
-        const size = Math.min(canvas.width, canvas.height) * 0.17;
+        // 【修正前】 const size = Math.min(canvas.width, canvas.height) * 0.17;
+        const size = Math.min(canvas.width, canvas.height) * 0.34; // 2倍の大きさに
         if (isImageLoaded) { // 画像が読み込めていたら画像を描く
           ctx.drawImage(spriteImage, spriteX - size / 2, spriteY - size / 2, size, size);
         } else { // 読み込めていなければ代わりの白い丸を描く
@@ -228,7 +230,8 @@
 
         // ゴマちゃんと触れた位置の距離を計算する
         const dist = Math.sqrt(Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2));
-        const hitLimit = Math.min(canvas.width, canvas.height) * 0.17; // 当たり判定の広さ（0.17倍）
+        // 【修正前】 const hitLimit = Math.min(canvas.width, canvas.height) * 0.17;
+        const hitLimit = Math.min(canvas.width, canvas.height) * 0.34; // 判定も2倍に
 
         if (dist < hitLimit) { // もし距離が判定範囲内（捕まえた）なら
           score++; // スコアを1増やす
