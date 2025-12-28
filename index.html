@@ -241,8 +241,10 @@
         if (dist < hitLimit) { // もし距離が判定範囲内（捕まえた）なら
           score++; // スコアを1増やす
           // ゴマちゃんをランダムな位置にワープさせる
-          spriteX = Math.random() * (canvas.width - 100) + 50;
-          spriteY = Math.random() * (canvas.height - 100) + 50;
+// 【修正案】ワープ位置の計算
+// 50 → 100, -100 → -200 にすることで、より中央寄りに現れます
+spriteX = Math.random() * (canvas.width - 200) + 100;
+spriteY = Math.random() * (canvas.height - 200) + 100;
           // 捕まえるたびにスピードを5%ずつ速くする
           spriteSpeed[0] *= 1.05;
           spriteSpeed[1] *= 1.05;
