@@ -1,0 +1,20 @@
+{
+  "short_name": "ゴマちゃん",
+  "name": "ゴマちゃんを追え",
+  "icons": [
+    {
+      "src": "images/goma.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/goma.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a0a32",
+  "theme_color": "#0a0a32"
+}
