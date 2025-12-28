@@ -1,232 +1,173 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ゴマちゃんを追え - Fullscreen</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        touch-action: none;
-      }
+<script>
+  // --- 画面上の部品（HTML要素）をつかまえる ---
+  const canvas = document.getElementById("gameCanvas"); // 描画用のキャンバスを取得
+  const ctx = canvas.getContext("2d"); // 描画するための「ペン」を準備
+  const volumeContainer = document.getElementById("volume-container"); // 音量コントローラーの枠を取得
+  const volumeSlider = document.getElementById("volumeSlider"); // スライダー本体を取得
+  const volumeValue = document.getElementById("volumeValue"); // 音量の数字表示部分を取得
 
-      html, body {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #0a0a32;
-      }
+  // --- ゲームの状態を管理する変数（データ） ---
+  let score = 0; // 現在のスコア（捕まえた回数）
+  let spriteX = 0; // ゴマちゃんの横位置
+  let spriteY = 0; // ゴマちゃんの縦位置
+  let spriteSpeed = [0, 0]; // ゴマちゃんの移動速度 [横方向, 縦方向]
+  let volume = 70; // 効果音の音量（初期値70%）
+  let isGameStarted = false; // ゲームが始まっているかどうかの旗（フラグ）
 
-      canvas {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-        cursor: pointer;
-      }
+  // --- 音声と画像の準備 ---
+  const catSound = new Audio("images/cat.mp3"); // 通常の鳴き声（猫）を読み込む
+  const specialSound = new Audio("images/special.mp3"); // 10点ごとのスペシャル音を読み込む
+  
+  const spriteImage = new Image(); // ゴマちゃんの画像用の箱を作る
+  spriteImage.src = "images/goma.png"; // 画像の場所（パス）を指定
+  let isImageLoaded = false; // 画像が読み込み終わったかどうかの旗
+  spriteImage.onload = () => { isImageLoaded = true; }; // 読み込みが完了したら旗を立てる
 
-      /* ドラッグ可能な音量コントローラー */
-      #volume-container {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        cursor: move;
-        user-select: none;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-      }
+  // --- 画面サイズを調整する処理 ---
+  function resize() {
+    canvas.width = window.innerWidth; // キャンバスの幅をブラウザいっぱいに広げる
+    canvas.height = window.innerHeight; // キャンバスの高さをブラウザいっぱいに広げる
+    if (!isGameStarted) { // まだ始まっていないなら
+      spriteX = canvas.width / 2; // ゴマちゃんを画面の真ん中（横）に配置
+      spriteY = canvas.height / 2; // ゴマちゃんを画面の真ん中（縦）に配置
+    }
+  }
+  window.addEventListener("resize", resize); // 画面サイズが変えられたら再度計算する
+  resize(); // 最初に一度実行してサイズを合わせる
 
-      .volume-label {
-        color: white;
-        font-size: 14px;
-        font-family: sans-serif;
-        pointer-events: none;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-      }
+  // --- 音量調整とドラッグ（移動）の仕組み ---
+  volumeSlider.addEventListener("input", (e) => { // スライダーを動かしたとき
+    volume = parseInt(e.target.value); // スライダーの値を音量データに反映
+    volumeValue.textContent = volume; // 画面上の数字（%）を書き換える
+  });
 
-      input[type="range"] {
-        cursor: pointer;
-        width: 100px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="volume-container">
-      <div class="volume-label">🔊 <span id="volumeValue">70</span>%</div>
-      <input type="range" id="volumeSlider" min="0" max="100" value="70" />
-    </div>
+  let isDragging = false; // コントローラーをドラッグ中かどうかの旗
+  let offset = { x: 0, y: 0 }; // クリックした位置と枠の左上とのズレを記録
 
-    <canvas id="gameCanvas"></canvas>
+  const startDrag = (e) => { // ドラッグを開始したとき
+    if (e.target === volumeSlider) return; // スライダー自体を触っているときは移動させない
+    isDragging = true; // ドラッグ中フラグを立てる
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX; // マウスか指のX座標を取得
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY; // マウスか指のY座標を取得
+    offset.x = clientX - volumeContainer.offsetLeft; // 枠の左端からの距離を計算
+    offset.y = clientY - volumeContainer.offsetTop; // 枠の上端からの距離を計算
+  };
 
-    <script>
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
-      const volumeContainer = document.getElementById("volume-container");
-      const volumeSlider = document.getElementById("volumeSlider");
-      const volumeValue = document.getElementById("volumeValue");
+  const doDrag = (e) => { // ドラッグして動かしている最中
+    if (!isDragging) return; // ドラッグ中でなければ何もしない
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX; // 現在のX座標
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY; // 現在のY座標
+    // 枠が画面の外に出ないように計算しながら、位置を書き換える
+    volumeContainer.style.left = Math.max(0, Math.min(window.innerWidth - volumeContainer.offsetWidth, clientX - offset.x)) + "px";
+    volumeContainer.style.top = Math.max(0, Math.min(window.innerHeight - volumeContainer.offsetHeight, clientY - offset.y)) + "px";
+  };
 
-      // --- ゲーム設定 ---
-      let score = 0;
-      let spriteX = 0;
-      let spriteY = 0;
-      let spriteSpeed = [0, 0]; // 最初は動かさない
-      let volume = 70;
-      let isGameStarted = false;
+  // マウスとタッチ両方の操作を登録する
+  volumeContainer.addEventListener("mousedown", startDrag); // マウスを押したとき
+  window.addEventListener("mousemove", doDrag); // マウスを動かしたとき
+  window.addEventListener("mouseup", () => isDragging = false); // マウスを離したとき
+  volumeContainer.addEventListener("touchstart", startDrag); // 指で触れたとき
+  window.addEventListener("touchmove", doDrag); // 指を動かしたとき
+  window.addEventListener("touchend", () => isDragging = false); // 指を離したとき
 
-      const catSound = new Audio("images/cat.mp3");
-      const specialSound = new Audio("images/special.mp3");
-      
-      const spriteImage = new Image();
-      spriteImage.src = "images/goma.png";
-      let isImageLoaded = false;
-      spriteImage.onload = () => { isImageLoaded = true; };
+  // --- 音を鳴らす処理 ---
+  function playSuccessSound() {
+    // スコアが10の倍数のときはスペシャル音、それ以外は猫の音を選ぶ
+    let targetSound = (score > 0 && score % 10 === 0) ? specialSound : catSound;
+    targetSound.volume = volume / 100; // 現在の音量設定を反映
+    targetSound.currentTime = 0; // 音を最初から再生するように巻き戻す
+    targetSound.play().catch(() => {}); // 再生（エラーが出ても無視する）
+  }
 
-      function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        if (!isGameStarted) {
-          spriteX = canvas.width / 2;
-          spriteY = canvas.height / 2;
-        }
-      }
-      window.addEventListener("resize", resize);
-      resize();
+  // --- 計算（位置の更新）の処理 ---
+  function update() {
+    if (!isGameStarted) return; // まだ始まっていないなら動かさない
+    spriteX += spriteSpeed[0]; // ゴマちゃんを横に動かす
+    spriteY += spriteSpeed[1]; // ゴマちゃんを縦に動かす
 
-      // --- 音量調整とドラッグ機能 ---
-      volumeSlider.addEventListener("input", (e) => {
-        volume = parseInt(e.target.value);
-        volumeValue.textContent = volume;
-      });
+    const bounceMargin = 40; // 壁での跳ね返り判定用の余白
+    if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin) spriteSpeed[0] *= -1; // 左右の壁で跳ね返る
+    if (spriteY < bounceMargin || spriteY > canvas.height - bounceMargin) spriteSpeed[1] *= -1; // 上下の壁で跳ね返る
+  }
 
-      let isDragging = false;
-      let offset = { x: 0, y: 0 };
+  // --- 描画（画面に絵を描く）の処理 ---
+  function draw() {
+    ctx.fillStyle = "#0a0a32"; // 背景色（紺色）を指定
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // 画面全体を塗りつぶしてリセット
 
-      const startDrag = (e) => {
-        if (e.target === volumeSlider) return;
-        isDragging = true;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        offset.x = clientX - volumeContainer.offsetLeft;
-        offset.y = clientY - volumeContainer.offsetTop;
-      };
+    // 1. 背景タイトルを描く
+    ctx.textAlign = "center"; // 文字を中央揃えにする
+    ctx.textBaseline = "middle"; // 文字の上下の基準を真ん中にする
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; // 非常に薄い白色にする
+    const titleFontSize = Math.min(canvas.width / 10, 80); // 画面幅に合わせたフォントサイズを計算
+    ctx.font = `bold ${titleFontSize}px sans-serif`; // 太字の設定を適用
+    ctx.fillText("ゴマちゃんを追え", canvas.width / 2, 100); // 画面上部にタイトルを描画
 
-      const doDrag = (e) => {
-        if (!isDragging) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        volumeContainer.style.left = Math.max(0, Math.min(window.innerWidth - volumeContainer.offsetWidth, clientX - offset.x)) + "px";
-        volumeContainer.style.top = Math.max(0, Math.min(window.innerHeight - volumeContainer.offsetHeight, clientY - offset.y)) + "px";
-      };
+    // 2. スタート案内（ゲームが始まっていない時だけ表示）
+    if (!isGameStarted) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; // 少しはっきりした白色
+      ctx.font = "20px Arial"; // 文字サイズ20px
+      ctx.fillText("画面をクリックしてスタート！", canvas.width / 2, canvas.height / 2 + 100);
+    }
 
-      volumeContainer.addEventListener("mousedown", startDrag);
-      window.addEventListener("mousemove", doDrag);
-      window.addEventListener("mouseup", () => isDragging = false);
-      volumeContainer.addEventListener("touchstart", startDrag);
-      window.addEventListener("touchmove", doDrag);
-      window.addEventListener("touchend", () => isDragging = false);
+    // 3. スコアを描く（画面下部の中央）
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)"; // 少し透けた白色
+    ctx.font = "bold 24px Arial"; // 文字サイズ24px
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 50);
 
-      function playSuccessSound() {
-        let targetSound = (score > 0 && score % 10 === 0) ? specialSound : catSound;
-        targetSound.volume = volume / 100;
-        targetSound.currentTime = 0;
-        targetSound.play().catch(() => {});
-      }
+    // 4. ゴマちゃんを描く
+    const size = Math.min(canvas.width, canvas.height) * 0.3; // 画面サイズに合わせたゴマちゃんの大きさを計算
+    if (isImageLoaded) { // 画像の読み込みが終わっているなら
+      ctx.drawImage(spriteImage, spriteX - size / 2, spriteY - size / 2, size, size); // 画像を描画
+    } else { // まだなら代わりの丸を描く
+      ctx.fillStyle = "white"; // 白色
+      ctx.beginPath(); // 形を描き始める
+      ctx.arc(spriteX, spriteY, size/3, 0, Math.PI * 2); // 丸を描く
+      ctx.fill(); // 塗りつぶす
+    }
+  }
 
-      function update() {
-        if (!isGameStarted) return;
-        spriteX += spriteSpeed[0];
-        spriteY += spriteSpeed[1];
+  // --- ゲームループ（超高速で繰り返し実行される） ---
+  function loop() {
+    update(); // データの計算
+    draw(); // 画面の書き換え
+    requestAnimationFrame(loop); // 次の描画タイミングで再度自分（loop）を呼ぶ
+  }
 
-        const bounceMargin = 40;
-        if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin) spriteSpeed[0] *= -1;
-        if (spriteY < bounceMargin || spriteY > canvas.height - bounceMargin) spriteSpeed[1] *= -1;
-      }
+  // --- クリック・タッチされたときの判定 ---
+  function handleClick(e) {
+    if (e.target.closest("#volume-container")) return; // 音量調節部分をクリックした時はゲームの判定をしない
 
-      function draw() {
-        // 背景クリア
-        ctx.fillStyle = "#0a0a32";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!isGameStarted) { // 初めてクリックされたら
+      isGameStarted = true; // ゲーム開始フラグを立てる
+      spriteSpeed = [3, 3]; // ゴマちゃんを動かし始める
+      return; // 最初のクリックでは当たり判定をしない
+    }
 
-        // 1. タイトル（背景として描画）
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; // かなり薄く
-        const titleFontSize = Math.min(canvas.width / 10, 80);
-        ctx.font = `bold ${titleFontSize}px sans-serif`;
-        ctx.fillText("ゴマちゃんを追え", canvas.width / 2, 100);
+    const clientX = (e.touches ? e.touches[0].clientX : e.clientX); // クリックされた場所（X）
+    const clientY = (e.touches ? e.touches[0].clientY : e.clientY); // クリックされた場所（Y）
 
-        // 2. スタート案内（未開始時のみ）
-        if (!isGameStarted) {
-          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-          ctx.font = "20px Arial";
-          ctx.fillText("画面をクリックしてスタート！", canvas.width / 2, canvas.height / 2 + 100);
-        }
+    // ゴマちゃんとの距離を三平方の定理で計算
+    const dist = Math.sqrt(Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2));
+    const hitLimit = Math.min(canvas.width, canvas.height) * 0.3; // 当たり判定の広さ
 
-        // 3. スコア（下部中央）
-        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-        ctx.font = "bold 24px Arial";
-        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 50);
+    if (dist < hitLimit) { // 捕まえた（クリックが当たり範囲内だった）なら
+      score++; // スコアを増やす
+      spriteX = Math.random() * (canvas.width - 100) + 50; // 新しい場所にワープ（横）
+      spriteY = Math.random() * (canvas.height - 100) + 50; // 新しい場所にワープ（縦）
+      spriteSpeed[0] *= 1.05; // 横スピードを5%アップ
+      spriteSpeed[1] *= 1.05; // 縦スピードを5%アップ
+      playSuccessSound(); // 音を鳴らす
+    }
+  }
 
-        // 4. ゴマちゃん描画
-        const size = Math.min(canvas.width, canvas.height) * 0.15;
-        if (isImageLoaded) {
-          ctx.drawImage(spriteImage, spriteX - size / 2, spriteY - size / 2, size, size);
-        } else {
-          ctx.fillStyle = "white";
-          ctx.beginPath();
-          ctx.arc(spriteX, spriteY, size/3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+  // マウスとタッチのイベントを登録
+  canvas.addEventListener("mousedown", handleClick); // マウスが押されたとき
+  canvas.addEventListener("touchstart", (e) => { // 指で触れたとき
+    e.preventDefault(); // 画面のズームやスクロールなどのブラウザの動きを止める
+    handleClick(e); // 当たり判定を実行
+  }, { passive: false }); // 指の動きを制御するための設定
 
-      function loop() {
-        update();
-        draw();
-        requestAnimationFrame(loop);
-      }
-
-      function handleClick(e) {
-        if (e.target.closest("#volume-container")) return;
-
-        if (!isGameStarted) {
-          isGameStarted = true;
-          spriteSpeed = [3, 3];
-          return;
-        }
-
-        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-        const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
-
-        const dist = Math.sqrt(Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2));
-        const hitLimit = Math.min(canvas.width, canvas.height) * 0.15;
-
-        if (dist < hitLimit) {
-          score++;
-          spriteX = Math.random() * (canvas.width - 100) + 50;
-          spriteY = Math.random() * (canvas.height - 100) + 50;
-          spriteSpeed[0] *= 1.05;
-          spriteSpeed[1] *= 1.05;
-          playSuccessSound();
-        }
-      }
-
-      canvas.addEventListener("mousedown", handleClick);
-      canvas.addEventListener("touchstart", (e) => {
-        e.preventDefault();
-        handleClick(e);
-      }, { passive: false });
-
-      loop();
-    </script>
-  </body>
-</html>
+  // ゲームのメインループをスタート！
+  loop();
+</script>
