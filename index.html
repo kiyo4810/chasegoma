@@ -85,9 +85,14 @@
     spriteX += spriteSpeed[0]; // ゴマちゃんを横に動かす
     spriteY += spriteSpeed[1]; // ゴマちゃんを縦に動かす
 
-    const bounceMargin = 40; // 壁での跳ね返り判定用の余白
-    if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin) spriteSpeed[0] *= -1; // 左右の壁で跳ね返る
-    if (spriteY < bounceMargin || spriteY > canvas.height - bounceMargin) spriteSpeed[1] *= -1; // 上下の壁で跳ね返る
+    // サイズに基づいて跳ね返り範囲を自動調整する（エラー防止）
+    const currentSize = Math.min(canvas.width, canvas.height) * 0.3;
+    const margin = currentSize / 2; 
+
+    if (spriteX < margin) { spriteX = margin; spriteSpeed[0] *= -1; }
+    if (spriteX > canvas.width - margin) { spriteX = canvas.width - margin; spriteSpeed[0] *= -1; }
+    if (spriteY < margin) { spriteY = margin; spriteSpeed[1] *= -1; }
+    if (spriteY > canvas.height - margin) { spriteY = canvas.height - margin; spriteSpeed[1] *= -1; }
   }
 
   // --- 描画（画面に絵を描く）の処理 ---
@@ -116,7 +121,7 @@
     ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 50);
 
     // 4. ゴマちゃんを描く
-    const size = Math.min(canvas.width, canvas.height) * 0.3; // 画面サイズに合わせたゴマちゃんの大きさを計算
+    const size = Math.min(canvas.width, canvas.height) * 0.3; // 修正したサイズ 0.3
     if (isImageLoaded) { // 画像の読み込みが終わっているなら
       ctx.drawImage(spriteImage, spriteX - size / 2, spriteY - size / 2, size, size); // 画像を描画
     } else { // まだなら代わりの丸を描く
@@ -147,26 +152,27 @@
     const clientX = (e.touches ? e.touches[0].clientX : e.clientX); // クリックされた場所（X）
     const clientY = (e.touches ? e.touches[0].clientY : e.clientY); // クリックされた場所（Y）
 
-    // ゴマちゃんとの距離を三平方の定理で計算
+    const size = Math.min(canvas.width, canvas.height) * 0.3; // 判定用のサイズも合わせる
     const dist = Math.sqrt(Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2));
-    const hitLimit = Math.min(canvas.width, canvas.height) * 0.3; // 当たり判定の広さ
+    const hitLimit = size / 2; // 当たり判定の広さをサイズの半分に設定
 
-    if (dist < hitLimit) { // 捕まえた（クリックが当たり範囲内だった）なら
+    if (dist < hitLimit) { // 捕まえたなら
       score++; // スコアを増やす
-      spriteX = Math.random() * (canvas.width - 100) + 50; // 新しい場所にワープ（横）
-      spriteY = Math.random() * (canvas.height - 100) + 50; // 新しい場所にワープ（縦）
-      spriteSpeed[0] *= 1.05; // 横スピードを5%アップ
-      spriteSpeed[1] *= 1.05; // 縦スピードを5%アップ
+      // ワープ先もサイズを考慮して画面内におさめる
+      spriteX = Math.random() * (canvas.width - size) + size / 2;
+      spriteY = Math.random() * (canvas.height - size) + size / 2;
+      spriteSpeed[0] *= 1.05; // スピードアップ
+      spriteSpeed[1] *= 1.05; 
       playSuccessSound(); // 音を鳴らす
     }
   }
 
   // マウスとタッチのイベントを登録
-  canvas.addEventListener("mousedown", handleClick); // マウスが押されたとき
-  canvas.addEventListener("touchstart", (e) => { // 指で触れたとき
-    e.preventDefault(); // 画面のズームやスクロールなどのブラウザの動きを止める
-    handleClick(e); // 当たり判定を実行
-  }, { passive: false }); // 指の動きを制御するための設定
+  canvas.addEventListener("mousedown", handleClick); 
+  canvas.addEventListener("touchstart", (e) => { 
+    e.preventDefault(); 
+    handleClick(e); 
+  }, { passive: false }); 
 
   // ゲームのメインループをスタート！
   loop();
