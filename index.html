@@ -192,7 +192,7 @@
         // 下部中央に現在のスコアを薄く表示
         ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
         ctx.font = "bold 24px Arial";
-        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 50);
+        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height - 100); //下から５０をしたから１００に変更。スマホ対策
 
         // ゴマちゃんの描画サイズを決定（画面の短い方の17%）
         // 【修正前】 const size = Math.min(canvas.width, canvas.height) * 0.17;
