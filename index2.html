@@ -4,39 +4,42 @@
     <meta charset="UTF-8" />
     <title>ゴマちゃんを追え</title>
     <style>
-      /* ここに見た目の設定を書く */
+      /* ここは CSS（デザイン）の部屋 */
+      body {
+        margin: 0;
+        overflow: hidden; /* スクロールバーが出ないようにする */
+      }
+      canvas {
+        display: block; /* 隙間なく表示する */
+      }
     </style>
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
 
     <script>
-      // ここにゲームの「命令」を書く
-      // 1. 画用紙（Canvas）をJavaScriptで操作できるように捕まえる
+      /* ここは JavaScript（命令）の部屋 */
+
+      // 1. 画用紙を捕まえる
       const canvas = document.getElementById("gameCanvas");
 
-      // 2. 絵を描くための魔法のペン（コンテキスト）を取り出す
+      // 2. ペンを取り出す
       const ctx = canvas.getContext("2d");
 
-      // 3. 画用紙のサイズを画面いっぱいの大きさに設定する
+      // 3. 画用紙のサイズを画面いっぱいに設定する
       function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
-        // サイズが変わるたびに背景を塗り直す
         drawBackground();
       }
 
       // 4. 紺色で塗りつぶす関数
       function drawBackground() {
-        ctx.fillStyle = "#0a0a32"; // 紺色のペンキを選択
-        ctx.fillRect(0, 0, canvas.width, canvas.height); // 左上から画面全体を塗る
+        ctx.fillStyle = "#0a0a32";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // 画面のサイズが変わったときにresize関数を呼ぶようにする
       window.addEventListener("resize", resize);
-
-      // 最初に一度実行して、画面を塗る
       resize();
     </script>
   </body>
