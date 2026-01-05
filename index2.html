@@ -30,6 +30,22 @@
       const ctx = canvas.getContext("2d");
       console.log(ctx);
 
+      //   // 1. 画像を入れるための「箱（オブジェクト）」を作る
+      //   const spriteImage = new Image();
+
+      //   // 2. 「箱」の中に画像を読み込む（パスを指定する）
+      //   spriteImage.src = "images/goma.png";
+
+      //   // 3. 読み込みが終わった「あと」で実行する
+      //   spriteImage.onload = () => {
+      //     console.log("画像の読み込みが完了したよ！");
+      //     // ここにゴマちゃんを描く命令を後で書きます
+      //   };
+      const spriteImage = new Image();
+      spriteImage.src = "images/goma.png";
+      spriteImage.onload = () => {
+        console.log("画像の読み込みが完了したよ！");
+      };
       // 3. 画用紙のサイズを画面いっぱいに設定する
       //   function resize() {
       //     canvas.width = window.innerWidth;
