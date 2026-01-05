@@ -21,10 +21,14 @@
       /* ここは JavaScript（命令）の部屋 */
 
       // 1. 画用紙を捕まえる
+      //   const canvas = document.getElementById("gameCanvas");
       const canvas = document.getElementById("gameCanvas");
+      console.log(canvas);
 
       // 2. ペンを取り出す
+      //const ctx = canvas.getContext("2d");
       const ctx = canvas.getContext("2d");
+      console.log(ctx);
 
       // 3. 画用紙のサイズを画面いっぱいに設定する
       function resize() {
