@@ -45,6 +45,20 @@
       spriteImage.src = "images/goma.png";
       spriteImage.onload = () => {
         console.log("画像の読み込みが完了したよ！");
+        //         // ゴマちゃんの表示サイズを決める（200ピクセル）
+        //   const size = 200;
+
+        //   // 画面の真ん中に計算して置く
+        //   // (画面の幅 / 2) - (自分の幅 / 2)
+        //   const x = canvas.width / 2 - size / 2;
+        //   const y = canvas.height / 2 - size / 2;
+
+        //   // ゴマちゃんを描く！
+        //   ctx.drawImage(spriteImage, x, y, size, size);
+        const size = 200;
+        const x = canvas.width / 2 - size / 2;
+        const y = canvas.height / 2 - size / 2;
+        ctx.drawImage(spriteImage, x, y, size, size);
       };
       // 3. 画用紙のサイズを画面いっぱいに設定する
       //   function resize() {
