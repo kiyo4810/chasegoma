@@ -101,8 +101,16 @@
         ctx.fillStyle = "#0a0a32";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-
+      // これは、ブラウザ（window）に対して、「『リサイズ（resize）』という出来事が起きたら、
+      // 後ろに書いてある『resize』という名前の関数（命令セット）を実行してね！」
+      // という予約を入れている状態です。
+      // addEventListener: 「耳をすませて待機せよ」という命令です。
+      // "resize": 待ち構えるイベントの種類。ブラウザの幅や高さが変わった瞬間のことです。
+      // resize（後ろの方）: 実行してほしい関数の名前。
       window.addEventListener("resize", resize);
+      // 最後の一行で自分から resize(); と呼び出すことで：
+      // 最初の一回だけ、今の画面サイズを測らせる。
+      // 最初の一回だけ、背景を紺色に塗らせる。
       resize();
     </script>
   </body>
