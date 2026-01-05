@@ -40,6 +40,7 @@
       let vx = 2;
       let vy = 2;
       const size = 200;
+      let score = 0; // スコア（最初は0点）
       // function loop() {
       //   // 1. 計算：位置をスピード分だけ進める
       //   spriteX += vx;
@@ -70,6 +71,13 @@
         drawBackground();
         ctx.drawImage(spriteImage, spriteX, spriteY, size, size);
         requestAnimationFrame(loop);
+        /* loop関数の中、ctx.drawImage のすぐ下に追加 */
+        // ctx.fillStyle = "white"; // 文字の色を白にする
+        // ctx.font = "bold 30px Arial"; // 太さとサイズとフォントを決める
+        // ctx.fillText("Score: " + score, 20, 50); // 左上のほうに表示する
+        ctx.fillStyle = "white";
+        ctx.font = "bold 30px Arial";
+        ctx.fillText("Score: " + score, 20, 50);
       }
       const spriteImage = new Image();
       spriteImage.src = "images/goma.png";
@@ -111,6 +119,30 @@
       // 最後の一行で自分から resize(); と呼び出すことで：
       // 最初の一回だけ、今の画面サイズを測らせる。
       // 最初の一回だけ、背景を紺色に塗らせる。
+      // マウスが押された時のイベント（耳をすませて待機！）
+      canvas.addEventListener("mousedown", (e) => {
+        // クリックされた位置と、ゴマちゃんの中心位置の距離を測る
+        const centerX = spriteX + size / 2;
+        const centerY = spriteY + size / 2;
+
+        // マウスの位置(e.clientX, e.clientY)
+        const dist = Math.sqrt(
+          Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
+        );
+
+        // もしクリックした位置がゴマちゃんの半径（size/2）以内なら「当たり！」
+        if (dist < size / 2) {
+          score += 1; // スコアを1増やす
+
+          // 捕まったらゴマちゃんをランダムな位置にワープさせる！
+          spriteX = Math.random() * (canvas.width - size);
+          spriteY = Math.random() * (canvas.height - size);
+
+          // せっかくなので、少しずつスピードを速くしてみましょうか（オプション）
+          vx *= 1.1;
+          vy *= 1.1;
+        }
+      });
       resize();
     </script>
   </body>
