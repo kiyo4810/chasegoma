@@ -28,37 +28,55 @@
       // 2. ペンを取り出す
       //const ctx = canvas.getContext("2d");
       const ctx = canvas.getContext("2d");
-      console.log(ctx);
+      //       console.log(ctx);
+      // /* スクリプトの上のほう（canvasの定義の下あたり）に追加 */
+      // let spriteX = 0;      // 横の位置
+      // let spriteY = 0;      // 縦の位置
+      // let vx = 2;           // 横のスピード（1フレームに何ピクセル進むか）
+      // let vy = 2;           // 縦のスピード
+      // const size = 200;     // ゴマちゃんのサイズ
+      let spriteX = 0;
+      let spriteY = 0;
+      let vx = 2;
+      let vy = 2;
+      const size = 200;
+      // function loop() {
+      //   // 1. 計算：位置をスピード分だけ進める
+      //   spriteX += vx;
+      //   spriteY += vy;
 
-      //   // 1. 画像を入れるための「箱（オブジェクト）」を作る
-      //   const spriteImage = new Image();
-
-      //   // 2. 「箱」の中に画像を読み込む（パスを指定する）
-      //   spriteImage.src = "images/goma.png";
-
-      //   // 3. 読み込みが終わった「あと」で実行する
-      //   spriteImage.onload = () => {
-      //     console.log("画像の読み込みが完了したよ！");
-      //     // ここにゴマちゃんを描く命令を後で書きます
-      //   };
+      //   // 2. 跳ね返り：壁にぶつかったらスピードを逆転させる
+      //   if (spriteX < 0 || spriteX > canvas.width - size) {
+      //     vx *= -1; // 横方向を反対に
+      //   }
+      //   if (spriteY < 0 || spriteY > canvas.height - size) {
+      //     vy *= -1; // 縦方向を反対に
+      //   }
+      //   // 3. 描画：前の絵を消して、新しい位置に描き直す
+      //   drawBackground(); // 紺色で塗りつぶす（これで前のゴマちゃんが消える）
+      //   ctx.drawImage(spriteImage, spriteX, spriteY, size, size);
+      //   // 4. 次のフレームを予約する（1/60秒後にまたloopを呼ぶ）
+      //   requestAnimationFrame(loop);
+      // }
+      function loop() {
+        spriteX += vx;
+        spriteY += vy;
+        if (spriteX < 0 || spriteX > canvas.width - size) {
+          vx *= -1;
+        }
+        if (spriteY < 0 || spriteY > canvas.height - size) {
+          vy *= -1;
+        }
+        drawBackground();
+        ctx.drawImage(spriteImage, spriteX, spriteY, size, size);
+        requestAnimationFrame(loop);
+      }
       const spriteImage = new Image();
       spriteImage.src = "images/goma.png";
       spriteImage.onload = () => {
-        console.log("画像の読み込みが完了したよ！");
-        //         // ゴマちゃんの表示サイズを決める（200ピクセル）
-        //   const size = 200;
-
-        //   // 画面の真ん中に計算して置く
-        //   // (画面の幅 / 2) - (自分の幅 / 2)
-        //   const x = canvas.width / 2 - size / 2;
-        //   const y = canvas.height / 2 - size / 2;
-
-        //   // ゴマちゃんを描く！
-        //   ctx.drawImage(spriteImage, x, y, size, size);
-        const size = 200;
         const x = canvas.width / 2 - size / 2;
         const y = canvas.height / 2 - size / 2;
-        ctx.drawImage(spriteImage, x, y, size, size);
+        loop();
       };
       // 3. 画用紙のサイズを画面いっぱいに設定する
       //   function resize() {
