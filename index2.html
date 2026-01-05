@@ -31,17 +31,26 @@
       console.log(ctx);
 
       // 3. 画用紙のサイズを画面いっぱいに設定する
+      //   function resize() {
+      //     canvas.width = window.innerWidth;
+      //     canvas.height = window.innerHeight;
+      //     console.log(canvas.width);
+      //     console.log(canvas.height);
+      //     drawBackground();
+      //  }
       function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        console.log(canvas.width);
-        console.log(canvas.height);
         drawBackground();
       }
 
       // 4. 紺色で塗りつぶす関数
+      //function drawBackground() {
+      // ctx.fillStyle = "#0a0a32";
+      // ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // }
       function drawBackground() {
-        ctx.fillStyle = "#0a0a32";
+        ctx.fillstyle = "#0a0a32";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
