@@ -12,9 +12,37 @@
       canvas {
         display: block; /* 隙間なく表示する */
       }
+      /* 音量コントローラーの見た目（目標コードの再現） */
+      #volume-container {
+        position: absolute; /* 画面の決まった場所に浮かせる */
+        top: 20px;
+        left: 20px;
+        z-index: 1000; /* キャンバスより手前に表示 */
+        background: rgba(255, 255, 255, 0.1); /* 半透明の白 */
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: move; /* 「つかめるよ」というマウスの形 */
+        backdrop-filter: blur(8px); /* 背景をぼかすおしゃれ機能 */
+        -webkit-backdrop-filter: blur(8px);
+      }
+
+      .volume-label {
+        color: white;
+        font-family: sans-serif;
+        pointer-events: none; /* 文字はクリックの邪魔をしないように */
+      }
     </style>
   </head>
   <body>
+    <div id="volume-container">
+      <div class="volume-label">🔊 <span id="volumeValue">70</span>%</div>
+      <input type="range" id="volumeSlider" min="0" max="100" value="70" />
+    </div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -100,6 +128,8 @@
         const y = canvas.height / 2 - size / 2;
         loop();
       };
+      const catSound = new Audio("images/cat.mp3");
+      const specialSound = new Audio("images/special.mp3");
       // 3. 画用紙のサイズを画面いっぱいに設定する
       //   function resize() {
       //     canvas.width = window.innerWidth;
@@ -112,6 +142,18 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         drawBackground();
+      }
+      /* resize関数の下あたりにでも追加 */
+      // 前のステップで作った「音を鳴らす関数」を少し改造
+      function playSuccessSound() {
+        let targetSound =
+          score > 0 && score % 10 === 0 ? specialSound : catSound;
+
+        // ★ ここでスライダーの値を反映させる（0.0〜1.0にするために100で割る）
+        targetSound.volume = volume / 100;
+
+        targetSound.currentTime = 0;
+        targetSound.play().catch(() => {});
       }
 
       // 4. 紺色で塗りつぶす関数
@@ -149,7 +191,8 @@
         // 3. もし距離がゴマちゃんの半径（size/2）より小さければ「当たり！」
         if (dist < size / 2) {
           score += 1; // スコアアップ！
-
+          // ★ ここで追加した関数を呼ぶ！
+          playSuccessSound();
           // ゴマちゃんを別の場所にワープさせる（逃げる！）
           spriteX = Math.random() * (canvas.width - size);
           spriteY = Math.random() * (canvas.height - size);
@@ -160,6 +203,74 @@
         }
       });
       resize();
+
+      // スライダーの部品を捕まえる
+      const volumeSlider = document.getElementById("volumeSlider");
+      const volumeValue = document.getElementById("volumeValue");
+      /* 追加する場所：const volumeSlider = ... の上あたり */
+      const volumeContainer = document.getElementById("volume-container");
+
+      let volume = 70; // 最初の音量（70%）
+
+      // スライダーを動かした時に実行する予約
+      volumeSlider.addEventListener("input", (e) => {
+        volume = parseInt(e.target.value); // 数字として読み取る
+        volumeValue.textContent = volume; // 画面の数字を書き換える
+      });
+
+      // --- 音量パネルをドラッグで移動させる仕組み ---
+      let isDragging = false; // パネルをつかんでいるかどうかの目印
+      let offset = { x: 0, y: 0 }; // つかんだ位置とパネルの左上の「ズレ」を記録
+
+      const startDrag = (e) => {
+        // スライダー本体を触っているときは、パネル移動はさせない
+        if (e.target === volumeSlider) return;
+
+        isDragging = true;
+        // マウスかタッチ（指）か、両方から座標を取得できるようにする
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // つかんだ瞬間の、パネルの左上からの距離を測っておく（これがないとパネルが飛びます）
+        offset.x = clientX - volumeContainer.offsetLeft;
+        offset.y = clientY - volumeContainer.offsetTop;
+      };
+
+      const doDrag = (e) => {
+        if (!isDragging) return; // つかんでいなければ何もしない
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // パネルの新しい位置を計算（画面の外に出ないように Math.max と Math.min で制限）
+        const newX = Math.max(
+          0,
+          Math.min(
+            window.innerWidth - volumeContainer.offsetWidth,
+            clientX - offset.x
+          )
+        );
+        const newY = Math.max(
+          0,
+          Math.min(
+            window.innerHeight - volumeContainer.offsetHeight,
+            clientY - offset.y
+          )
+        );
+
+        volumeContainer.style.left = newX + "px";
+        volumeContainer.style.top = newY + "px";
+      };
+
+      // イベントの登録（マウスとタッチの両方に対応）
+      volumeContainer.addEventListener("mousedown", startDrag);
+      window.addEventListener("mousemove", doDrag);
+      window.addEventListener("mouseup", () => (isDragging = false));
+
+      // スマホ用
+      volumeContainer.addEventListener("touchstart", startDrag);
+      window.addEventListener("touchmove", doDrag);
+      window.addEventListener("touchend", () => (isDragging = false));
     </script>
   </body>
 </html>
