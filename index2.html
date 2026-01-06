@@ -19,7 +19,8 @@
 
     <script>
       /* ここは JavaScript（命令）の部屋 */
-
+      // let isGameStarted = false; // まだ始まっていないという「目印」
+      let isGameStarted = false;
       // 1. 画用紙を捕まえる
       //   const canvas = document.getElementById("gameCanvas");
       const canvas = document.getElementById("gameCanvas");
@@ -60,15 +61,28 @@
       //   requestAnimationFrame(loop);
       // }
       function loop() {
-        spriteX += vx;
-        spriteY += vy;
-        if (spriteX < 0 || spriteX > canvas.width - size) {
-          vx *= -1;
+        if (isGameStarted) {
+          spriteX += vx;
+          spriteY += vy;
+          if (spriteX < 0 || spriteX > canvas.width - size) {
+            vx *= -1;
+          }
+          if (spriteY < 0 || spriteY > canvas.height - size) {
+            vy *= -1;
+          }
         }
-        if (spriteY < 0 || spriteY > canvas.height - size) {
-          vy *= -1;
-        }
+
         drawBackground();
+        if (!isGameStarted) {
+          // 始まっていない時は、画面中央に「クリックしてスタート」と出す
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          ctx.fillText(
+            "画面をクリックしてスタート！",
+            canvas.width / 2,
+            canvas.height / 2 + 100
+          );
+        }
         ctx.drawImage(spriteImage, spriteX, spriteY, size, size);
         requestAnimationFrame(loop);
         /* loop関数の中、ctx.drawImage のすぐ下に追加 */
@@ -116,29 +130,31 @@
       // "resize": 待ち構えるイベントの種類。ブラウザの幅や高さが変わった瞬間のことです。
       // resize（後ろの方）: 実行してほしい関数の名前。
       window.addEventListener("resize", resize);
-      // 最後の一行で自分から resize(); と呼び出すことで：
-      // 最初の一回だけ、今の画面サイズを測らせる。
-      // 最初の一回だけ、背景を紺色に塗らせる。
-      // マウスが押された時のイベント（耳をすませて待機！）
+      // マウスが押された時の処理
       canvas.addEventListener("mousedown", (e) => {
-        // クリックされた位置と、ゴマちゃんの中心位置の距離を測る
+        if (!isGameStarted) {
+          isGameStarted = true; // 最初のクリックでゲーム開始！
+          return; // 最初のクリックではスコアは増やさない
+        }
+        // 1. ゴマちゃんの中心（おへそ）の場所を計算
         const centerX = spriteX + size / 2;
         const centerY = spriteY + size / 2;
 
-        // マウスの位置(e.clientX, e.clientY)
-        const dist = Math.sqrt(
-          Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
-        );
+        // 2. マウスの場所(e.clientX, e.clientY)と、中心の距離を測る
+        // Aの2乗 + Bの2乗 = Cの2乗 のルート！
+        const diffX = e.clientX - centerX;
+        const diffY = e.clientY - centerY;
+        const dist = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
 
-        // もしクリックした位置がゴマちゃんの半径（size/2）以内なら「当たり！」
+        // 3. もし距離がゴマちゃんの半径（size/2）より小さければ「当たり！」
         if (dist < size / 2) {
-          score += 1; // スコアを1増やす
+          score += 1; // スコアアップ！
 
-          // 捕まったらゴマちゃんをランダムな位置にワープさせる！
+          // ゴマちゃんを別の場所にワープさせる（逃げる！）
           spriteX = Math.random() * (canvas.width - size);
           spriteY = Math.random() * (canvas.height - size);
 
-          // せっかくなので、少しずつスピードを速くしてみましょうか（オプション）
+          // 捕まえるたびに少しずつスピードを上げる（やりがいアップ！）
           vx *= 1.1;
           vy *= 1.1;
         }
