@@ -9,10 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="manifest2.json" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
       * {
         margin: 0;
@@ -124,8 +121,7 @@
       }
 
       function playSuccessSound() {
-        let targetSound =
-          score > 0 && score % 10 === 0 ? specialSound : catSound;
+        let targetSound = score > 0 && score % 10 === 0 ? specialSound : catSound;
         targetSound.volume = volume / 100;
         targetSound.currentTime = 0;
         targetSound.play().catch(() => {});
@@ -144,9 +140,7 @@
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
         // 中心座標(spriteX, Y)との距離を測る（シンプルになりました！）
-        const dist = Math.sqrt(
-          Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2)
-        );
+        const dist = Math.sqrt(Math.pow(clientX - spriteX, 2) + Math.pow(clientY - spriteY, 2));
         const hitLimit = Math.min(canvas.width, canvas.height) * 0.34;
 
         if (dist < hitLimit / 2) {
@@ -165,10 +159,8 @@
         spriteY += spriteSpeed[1];
 
         const bounceMargin = 80; // 壁際での跳ね返り余裕
-        if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin)
-          spriteSpeed[0] *= -1;
-        if (spriteY < bounceMargin || spriteY > canvas.height - bounceMargin)
-          spriteSpeed[1] *= -1;
+        if (spriteX < bounceMargin || spriteX > canvas.width - bounceMargin) spriteSpeed[0] *= -1;
+        if (spriteY < bounceMargin || spriteY > canvas.height - bounceMargin) spriteSpeed[1] *= -1;
       }
 
       function draw() {
@@ -179,13 +171,7 @@
 
         if (isImageLoaded) {
           // ★ここが重要：中心座標(spriteX, spriteY)から、サイズの半分引いた位置に描く
-          ctx.drawImage(
-            spriteImage,
-            spriteX - currentSize / 2,
-            spriteY - currentSize / 2,
-            currentSize,
-            currentSize
-          );
+          ctx.drawImage(spriteImage, spriteX - currentSize / 2, spriteY - currentSize / 2, currentSize, currentSize);
         }
 
         // スコアとスタート文字（目標コードの位置に合わせる）
@@ -196,11 +182,7 @@
 
         if (!isGameStarted) {
           ctx.fillStyle = "white";
-          ctx.fillText(
-            "画面をクリックしてスタート！!",
-            canvas.width / 2,
-            canvas.height / 2 + 100
-          );
+          ctx.fillText("画面をクリックしてスタート！!", canvas.width / 2, canvas.height / 2 + 100);
         }
       }
 
@@ -251,22 +233,8 @@
         if (!isDragging) return;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        volumeContainer.style.left =
-          Math.max(
-            0,
-            Math.min(
-              window.innerWidth - volumeContainer.offsetWidth,
-              clientX - offset.x
-            )
-          ) + "px";
-        volumeContainer.style.top =
-          Math.max(
-            0,
-            Math.min(
-              window.innerHeight - volumeContainer.offsetHeight,
-              clientY - offset.y
-            )
-          ) + "px";
+        volumeContainer.style.left = Math.max(0, Math.min(window.innerWidth - volumeContainer.offsetWidth, clientX - offset.x)) + "px";
+        volumeContainer.style.top = Math.max(0, Math.min(window.innerHeight - volumeContainer.offsetHeight, clientY - offset.y)) + "px";
       };
 
       volumeContainer.addEventListener("mousedown", startDrag);
